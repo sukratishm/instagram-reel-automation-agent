@@ -1,50 +1,46 @@
 Instagram Reel Automation
+Automate faceless Instagram Reels end-to-end using n8n + Blotato.
 
-Automated faceless Instagram Reel creation and publishing using a local n8n instance and Blotato.
+This repo contains an n8n workflow JSON you can import, configure with environment variables, and run on a schedule to:
 
-This workflow runs end-to-end without manual intervention:
-idea selection → script & caption generation → video creation → Instagram publishing.
+generate reel content (script/caption),
+send it to Blotato for video creation,
+publish to Instagram.
+No faces were harmed in the making of this automation 😄
 
-If you like automations that work while you sleep, this one’s caffeinated ☕
+What’s inside
+workflow/instagram-reel-automation.n8n.json — the n8n workflow (sanitized: no secrets)
+.env.example — environment variables you need to set in n8n
+.gitignore — keeps secrets out of Git history
+Requirements
+n8n (self-hosted or cloud)
+Blotato account + API key
+Instagram account connected in Blotato
+Any extra credentials referenced by your n8n nodes (e.g., OpenAI) configured in n8n
+Setup
+1) Import the workflow into n8n
+In n8n:
 
-Why this exists
+Workflows → Import from File
+Select: workflow/instagram-reel-automation.n8n.json
+2) Set environment variables (important)
+This workflow expects these variables:
 
-Posting Reels consistently is hard.
-Creating videos is time-consuming.
-Doing it daily is… character building.
+BLOTATO_API_KEY
+BLOTATO_INSTAGRAM_ID
+Create them in your n8n environment (recommended) or your hosting environment.
 
-This automation solves that by:
+Use .env.example as a template.
 
-removing the need to record yourself,
+3) Configure n8n credentials
+If any nodes use external services (e.g., OpenAI, Google, etc.), configure their credentials inside n8n.
 
-eliminating repetitive manual work,
+4) Activate
+Turn the workflow Active and let it cook.
 
-ensuring ideas are not reused,
+Security note (please read)
+✅ This workflow file is sanitized and does not include your real API key.
+Never commit real secrets to GitHub.
 
-publishing content on autopilot.
-
-Once configured, the workflow can run 24/7 on a local n8n instance.
-
-What this automation does (high level)
-
-Triggers on a schedule
-
-Fetches previously used content ideas
-
-Generates a new script + caption
-
-Sends content to Blotato to generate a video
-
-Uploads the video to Instagram
-
-Marks the idea as “used” to avoid repetition
-
-No dashboards. No uploads. No clicking buttons like a caveman.
-
-Tech stack
-
-n8n (self-hosted / local instance)
-
-Blotato API (video creation + Instagram publishing)
-
-Optional: AI model credentials used inside n8n (e.g. OpenAI)
+License
+MIT — do whatever you want, just don’t blame the workflow if your Reels become too powerful.
