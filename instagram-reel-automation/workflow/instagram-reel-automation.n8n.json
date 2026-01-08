@@ -1,0 +1,574 @@
+{
+  "name": "just know it well Faceless video Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://backend.blotato.com/v2/media",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "blotato-api-key",
+              "value": "={{ $('Prepare for Publish').item.json.blotato_api_key }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $('Get Video').item.json.item.mediaUrl }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        944,
+        1104
+      ],
+      "id": "402b955f-84b1-4025-a613-9687e0031e2e",
+      "name": "Upload to Blotato"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://backend.blotato.com/v2/posts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "blotato-api-key",
+              "value": "={{ $('Prepare for Publish').item.json.blotato_api_key }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"post\": {\n    \"target\": {\n      \"targetType\": \"instagram\"\n    },\n    \"content\": {\n      \"text\": {{ $('Prepare for Publish').item.json.final_text_long.toJsonString() }},\n      \"platform\": \"instagram\",\n      \"mediaUrls\": [\"{{ $json.url }}\"]\n    },\n    \"accountId\": \"{{ $('Prepare for Publish').item.json.instagram_id }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1328,
+        1104
+      ],
+      "id": "05aef198-7383-4cf9-9e95-159997a78779",
+      "name": "[Instagram] Publish via Blotato"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2032,
+        1104
+      ],
+      "id": "987d7ba1-e5a5-4758-ad0a-56bd90efd648",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=USED IDEAS (do not repeat or rephrase):\n\n{{ $json.used_ideas_text }}\n\nRules:\n- Generate ideas that are NOT in USED IDEAS.\n- If any idea overlaps in topic or meaning, discard it and replace it.\n- Select ONE completely new idea and store it exactly as `selected_idea`.\n\n--------------------------------\nInstructions\n--------------------------------\n\nIdea Generation\n\n- Generate exactly 50 unique, never-before-used video ideas about obscure or surprising history facts related to the famous person.\n- Ideas must be specific, scroll-stopping, and suitable for a faceless short-form video.\n- Avoid generic facts, childhood stories everyone knows, or commonly taught history.\n\n--------------------------------\nRandom Selection\n--------------------------------\n\n- Randomly select ONE idea from the list of 50.\n- Confirm internally that it has not been used in any previous response and does not appear in USED IDEAS.\n- Save this idea exactly as `selected_idea`.\n\n--------------------------------\nResearch\n--------------------------------\n\n- Research accurate dates, numbers, locations, or statistics tied to the chosen idea.\n- Facts must be verifiable and simple enough for a 6th-grade audience.\n- These facts must be clearly reflected inside the script.\n\n--------------------------------\n25-Second Script (STRICT LENGTH RULES)\n--------------------------------\n\nWrite a faceless video script intended to run for approximately 25–30 seconds.\n\nHARD CONSTRAINTS (NON-NEGOTIABLE):\n- Script MUST be between 90 and 120 words.\n- Script MUST be broken into 8–10 short lines.\n- Each line MUST contain 8–15 words.\n- Each line should feel like one spoken beat.\n\nMANDATORY STRUCTURE:\n1) Hook (first 2 lines): strong curiosity, open loop.\n2) Context (next 2 lines): introduce the obscure fact.\n3) Deep Detail (next 3–4 lines): explain facts using dates, numbers, or locations.\n4) Closing Insight (final 1–2 lines): satisfying explanation, no CTA.\n\nSTYLE RULES:\n- Use active voice only.\n- Use short, clear sentences.\n- Do NOT use greetings, filler words, or emojis.\n- Assume visuals are stock footage, photos, or text overlays.\n- Do NOT summarize. Fully explain the idea.\n\nSELF-CHECK BEFORE RESPONDING:\n- Count the total number of words.\n- If the script is under 90 words, EXPAND it before returning.\n- If the script is over 120 words, TRIM it before returning.\n\n--------------------------------\nCaption\n--------------------------------\n\n- Write a 2-sentence caption in 6th-grade language.\n- No emojis.\n- End with EXACTLY 3 hashtags, including #ai.\n\n--------------------------------\nOutput Format (STRICT)\n--------------------------------\n\nReturn ONLY valid JSON in this exact structure:\n\n{\n  \"selected_idea\": \"The exact idea chosen from the 50 ideas\",\n  \"script\": \"Faceless video script text (90–120 words, 8–10 lines)\",\n  \"caption\": \"Two-sentence caption here #hashtag1 #hashtag2 #ai\"\n}\n",
+        "hasOutputParser": true,
+        "options": {
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        -960,
+        1104
+      ],
+      "id": "2024eb7b-c0e9-4f86-852b-7d37fc589fab",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "amount": 10,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        256,
+        1104
+      ],
+      "id": "5fbcc763-4785-4cd6-bfb4-35a9662a5280",
+      "name": "Wait",
+      "webhookId": "83991019-318c-46e2-85d2-6e4bdcd6b69e",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "content": "# Write Video Script",
+        "height": 2100,
+        "width": 1052,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2160,
+        128
+      ],
+      "id": "e0953627-9a53-42d9-8868-9b05f6850e38",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "# Create Faceless Video\n\n- Sign up for Blotato: https://www.blotato.com\n- Here is the Blotato API documentation: https://help.blotato.com/api-reference/create-video",
+        "height": 2100,
+        "width": 800,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1008,
+        144
+      ],
+      "id": "ba58fb2c-b466-494d-a71e-83207a971c09",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "# Publish to Social Media\n\n- Sign up for Blotato: https://www.blotato.com\n- Blotato's API currently doesn't support uploading videos to Bluesky or Pinterest. \n- This feature will be released in the future, so I've deactivated the nodes for now.",
+        "height": 2100,
+        "width": 1696,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -16
+      ],
+      "id": "fe97f9ce-152d-4c03-a6b5-80f10d1d67f8",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"blotato_api_key\": \"={{ $env.BLOTATO_API_KEY }}\",\n  \"instagram_id\": \"={{ $env.BLOTATO_INSTAGRAM_ID }}\",\n  \"youtube_id\": \"\",\n  \"tiktok_id\": \"\",\n  \"facebook_id\": \"\",\n  \"facebook_page_id\": \"\",\n  \"threads_id\": \"\",\n  \"twitter_id\": \"\",\n  \"linkedin_id\": \"\",\n  \"pinterest_id\": \"\",\n  \"pinterest_board_id\": \"\",\n  \"bluesky_id\": \"\",\n  \"final_text_long\": {{ $('Prepare Video').item.json.script.caption.toJsonString() }},\n  \"final_text_short\": {{ $('Prepare Video').item.json.script.caption.toJsonString() }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        784,
+        1104
+      ],
+      "id": "c522a4e7-1f98-41ce-acef-521b1b146fea",
+      "name": "Prepare for Publish"
+    },
+    {
+      "parameters": {
+        "content": "## Make sure you fill out \"Prepare Video\"",
+        "height": 180,
+        "width": 150,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1296,
+        1344
+      ],
+      "id": "0a9c3704-2490-4269-a1e9-3e31649876a3",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## Make sure you fill out \"Prepare for Publish\"",
+        "height": 180,
+        "width": 160,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        128,
+        1344
+      ],
+      "id": "9a0cdc05-7c11-416c-84ce-b96c2631ceb9",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://backend.blotato.com/v2/videos/creations",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "blotato-api-key",
+              "value": "={{ $json.blotato_api_key }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"template\": {\n    \"id\": \"{{ $json.template }}\",\n    \"voiceId\": \"{{ $json.voiceId }}\",\n    \"captionPosition\": \"{{ $json.captionPosition }}\"\n  },\n  \"script\": {{ $json.script.script.toJsonString() }},\n  \"style\": \"{{ $json.style }}\",\n  \"animateFirstImage\": {{ $json.animate_first_image }},\n  \"animateAll\": {{ $json.animate_all }},\n  \"textToImageModel\": \"{{ $json.text_to_image_model }}\",\n  \"imageToVideoModel\": \"{{ $json.image_to_video_model }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        64,
+        1104
+      ],
+      "id": "bb095703-ee92-493d-8a5c-796789f0f6bc",
+      "name": "Create Video"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -960,
+        1280
+      ],
+      "id": "478d1a3b-06e5-4308-9859-e2410180a2f1",
+      "name": "Brainstorm Idea"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"blotato_api_key\": \"={{ $env.BLOTATO_API_KEY }}\",\n  \"template\": \"empty\",\n  \"voiceId\": \"elevenlabs/eleven_multilingual_v2/JBFqnCBsd6RMkjVDRZzb\",\n  \"captionPosition\": \"bottom\",\n  \"script\": {{ $('AI Agent').item.json.output.toJsonString() }},\n  \"style\": \"cinematic\",\n  \"animate_first_image\": true,\n  \"animate_all\": false,\n  \"text_to_image_model\": \"replicate/recraft-ai/recraft-v3\",\n  \"image_to_video_model\": \"fal-ai/framepack\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -144,
+        1104
+      ],
+      "id": "24253e22-fdd0-4ff0-8f6f-88c761e235a3",
+      "name": "Prepare Video"
+    },
+    {
+      "parameters": {
+        "url": "=https://backend.blotato.com/v2/videos/creations/{{ $json.item.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "blotato-api-key",
+              "value": "={{ $('Prepare Video').item.json.blotato_api_key }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        464,
+        1104
+      ],
+      "id": "5eade112-7388-435a-802f-bbd6dfefb21f",
+      "name": "Get Video"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"script\": \"your video script\",\n\t\"caption\": \"short video caption\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -736,
+        1424
+      ],
+      "id": "81d5b774-ab08-45e4-9725-a13c254a47af",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "content_agent",
+        "contextWindowLength": 200
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -880,
+        1408
+      ],
+      "id": "d1434c54-6871-4c23-a8db-3cde1284b41d",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "biFPqCJXdRJna9X8",
+          "mode": "list",
+          "cachedResultName": "used_ideas",
+          "cachedResultUrl": "/projects/KPN3IBmfAKDsHIR2/datatables/biFPqCJXdRJna9X8"
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        -1824,
+        1104
+      ],
+      "id": "4f4731f1-1ed0-4b39-adcf-700b06851c37",
+      "name": "Get row(s)"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json);\nconst ideas = rows.map(r => r.idea).filter(Boolean);\n\nreturn [\n  {\n    json: {\n      used_ideas_text: ideas.length\n        ? ideas.map((t, i) => `${i + 1}) ${t}`).join(\"\\n\")\n        : \"None yet.\"\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1616,
+        1104
+      ],
+      "id": "d8cc5215-73b2-4d16-9bb0-a99d44b9eb51",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "biFPqCJXdRJna9X8",
+          "mode": "list",
+          "cachedResultName": "used_ideas",
+          "cachedResultUrl": "/projects/KPN3IBmfAKDsHIR2/datatables/biFPqCJXdRJna9X8"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idea": "{{ $('AI Agent').item.json.output.selected_idea }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "idea",
+              "displayName": "idea",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "topic",
+              "displayName": "topic",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        -608,
+        1104
+      ],
+      "id": "bc962f79-ebb8-4b10-ab2f-5ea9c9da55ec",
+      "name": "Insert row"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Upload to Blotato": {
+      "main": [
+        [
+          {
+            "node": "[Instagram] Publish via Blotato",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Insert row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Get Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare for Publish": {
+      "main": [
+        [
+          {
+            "node": "Upload to Blotato",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Video": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Brainstorm Idea": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Video": {
+      "main": [
+        [
+          {
+            "node": "Create Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Video": {
+      "main": [
+        [
+          {
+            "node": "Prepare for Publish",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s)": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert row": {
+      "main": [
+        [
+          {
+            "node": "Prepare Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "",
+  "meta": {
+    "instanceId": "REDACTED"
+  },
+  "tags": []
+}
