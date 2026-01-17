@@ -1,6 +1,6 @@
 # 🎬 Faceless Video Automation with Memory System
 
-Create and publish faceless Instagram videos automatically using AI — with a built-in memory system that **prevents repeated topics** and **learns from your best-performing hooks**.
+Create and publish faceless Instagram videos automatically using AI with a built-in memory system that **prevents repeated topics** and **learns from your best-performing hooks**.
 
 Powered by **n8n + OpenAI + Blotato + Google Sheets**.
 
