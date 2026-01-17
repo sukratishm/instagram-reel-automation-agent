@@ -16,6 +16,9 @@ Powered by **n8n + OpenAI + Blotato + Google Sheets**.
 ✅ Logs everything into Google Sheets for tracking  
 
 ---
+## 🧠 Workflow Overview
+
+![Faceless Video Automation Workflow](assets/workflow.png)
 
 ## 🧠 Why This Is Different (Memory System)
 
