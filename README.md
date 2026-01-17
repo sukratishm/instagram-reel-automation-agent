@@ -17,8 +17,7 @@ Powered by **n8n + OpenAI + Blotato + Google Sheets**.
 
 ---
 ## 🧠 Workflow Overview
-
-![Faceless Video Automation Workflow](assets/workflow.png)
+assests/workflow.png
 
 ## 🧠 Why This Is Different (Memory System)
 
