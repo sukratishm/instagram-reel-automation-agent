@@ -31,11 +31,8 @@ Result: **less repetition, stronger hooks, better growth.**
 ---
 
 ## 📦 Included Files
-/workflows/
 
 Faceless_Video_Workflow_CLEAN.json
-
-/sheets/
 
 Faceless_Video_Tracker_Template.csv ✅ (Upload this to Google Sheets)
 
