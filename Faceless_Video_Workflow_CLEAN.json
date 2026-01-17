@@ -1,0 +1,583 @@
+{
+  "name": "Faceless Video Automation with Memory System",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-2200, 1100],
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_SPREADSHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "id"
+        },
+        "columnToMatchOn": "Topic",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.toFormat('yyyy-MM-dd HH:mm') }}",
+            "Topic": "={{ $('AI Agent').item.json.output.selected_idea }}",
+            "Hook": "={{ $('AI Agent').item.json.output.script.split('\\n')[0] }}",
+            "Hook Format": "={{ $('AI Agent').item.json.output.hook_format_used }}",
+            "Full Script": "={{ $('AI Agent').item.json.output.script }}",
+            "Caption": "={{ $('AI Agent').item.json.output.caption }}",
+            "Status": "Generated",
+            "Video URL": "",
+            "Instagram Media ID": "",
+            "Views": "",
+            "Likes": "",
+            "Comments": "",
+            "Saves": "",
+            "Shares": "",
+            "Performance Score": ""
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [-600, 1300],
+      "id": "log-to-sheet",
+      "name": "📊 Log Reel to Sheet"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_SPREADSHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "id"
+        },
+        "columnToMatchOn": "Topic",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "Video Created",
+            "Video URL": "={{ $('Get Video').item.json.item.mediaUrl }}"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [500, 1300],
+      "id": "update-video-url",
+      "name": "Update Video URL"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract Instagram Media ID from Blotato response\nconst response = $input.first().json;\n\n// The response structure from Blotato publish endpoint\nconst instagramMediaId = response.id || response.postSubmissionId || '';\n\nreturn {\n  json: {\n    instagram_media_id: instagramMediaId,\n    topic: $('Prepare Video').item.json.script.selected_idea,\n    status: 'Published'\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1400, 1100],
+      "id": "extract-media-id",
+      "name": "Extract Instagram Media ID"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_SPREADSHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "id"
+        },
+        "columnToMatchOn": "Topic",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "={{ $json.status }}",
+            "Instagram Media ID": "={{ $json.instagram_media_id }}"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [1600, 1100],
+      "id": "update-published-status",
+      "name": "Update Published Status + Media ID"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_SPREADSHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [-1900, 1100],
+      "id": "get-all-reels",
+      "name": "Get All Past Reels"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_SPREADSHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=1",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [-1900, 900],
+      "id": "get-best-hooks",
+      "name": "Get Best Performing Hooks"
+    },
+    {
+      "parameters": {
+        "jsCode": "const allReels = $input.all().map(i => i.json);\nconst usedTopics = allReels\n  .map(r => r.Topic)\n  .filter(Boolean)\n  .filter(t => t !== 'Topic');\n\nreturn [\n  {\n    json: {\n      used_topics_text: usedTopics.length\n        ? usedTopics.map((t, i) => `${i + 1}) ${t}`).join(\"\\n\")\n        : \"None yet.\",\n      total_reels_created: usedTopics.length\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-1650, 1100],
+      "id": "process-used-topics",
+      "name": "Process Used Topics"
+    },
+    {
+      "parameters": {
+        "jsCode": "const bestHooks = $input.all()\n  .map(i => i.json)\n  .filter(h => h.Hook && h.Hook !== 'Hook');\n\nconst formattedHooks = bestHooks.map((hook, i) => {\n  return `${i + 1}) Hook: \"${hook.Hook}\" | Format: ${hook.Format || 'N/A'} | Performance: ${hook['Performance Score'] || 'N/A'}/10 | Views: ${hook.Views || 0}`;\n}).join(\"\\n\");\n\nconst hookFormats = bestHooks\n  .map(h => h.Format)\n  .filter(Boolean);\nconst uniqueFormats = [...new Set(hookFormats)];\n\nreturn [\n  {\n    json: {\n      best_hooks_text: formattedHooks || \"No best hooks saved yet. Add your top performers manually!\",\n      hook_formats: uniqueFormats.join(\", \") || \"No formats yet.\",\n      total_best_hooks: bestHooks.length\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-1650, 900],
+      "id": "process-best-hooks",
+      "name": "Process Best Hooks"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputs = $input.all();\n\nlet usedTopics = {};\nlet bestHooks = {};\n\nfor (const input of inputs) {\n  const data = input.json;\n  \n  if (data.used_topics_text !== undefined) {\n    usedTopics = data;\n  }\n  if (data.best_hooks_text !== undefined) {\n    bestHooks = data;\n  }\n}\n\nreturn [\n  {\n    json: {\n      used_topics_text: usedTopics.used_topics_text || \"None yet.\",\n      total_reels_created: usedTopics.total_reels_created || 0,\n      best_hooks_text: bestHooks.best_hooks_text || \"No best hooks saved yet.\",\n      hook_formats: bestHooks.hook_formats || \"No formats yet.\",\n      total_best_hooks: bestHooks.total_best_hooks || 0\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-1400, 1000],
+      "id": "merge-context",
+      "name": "Merge Context for AI"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=CONTEXT:\n\n**USED TOPICS (DO NOT REPEAT):**\n{{ $json.used_topics_text }}\n\n**BEST PERFORMING HOOKS (Study & Adapt These Patterns):**\n{{ $json.best_hooks_text }}\n\n**Proven Hook Formats:**\n{{ $json.hook_formats }}\n\n**Total Reels Created:** {{ $json.total_reels_created }}\n**Best Hooks Library Size:** {{ $json.total_best_hooks }}\n\n================================\nRULES - DO NOT REPEAT CHECK\n================================\n\n1. Generate ideas that are NOT in USED TOPICS\n2. If any idea overlaps in topic, meaning, or phrasing with USED TOPICS, discard it completely\n3. Check EVERY generated idea against the USED TOPICS list\n4. Select ONE completely new, never-used idea\n\n================================\nRULES - HOOK PATTERN REUSE\n================================\n\n1. Study the BEST PERFORMING HOOKS above\n2. Identify what makes them scroll-stopping (curiosity gaps, shocking facts, unexpected twists)\n3. Use similar FORMATS but with completely different topics\n4. Common winning patterns:\n   - \"What if I told you [shocking fact]?\"\n   - \"You won't believe what [person] did when...\"\n   - \"Everyone knows [common belief], but...\"\n   - \"The real reason [famous event] happened...\"\n5. Your hook MUST follow one of these proven formats\n\n================================\nINSTRUCTIONS\n================================\n\n**Idea Generation:**\n- Generate exactly 50 unique video ideas about obscure historical facts\n- Ideas must be specific, scroll-stopping, and suitable for faceless video\n- Avoid generic facts, childhood stories, or commonly taught history\n\n**Random Selection:**\n- Randomly select ONE idea from the 50\n- Confirm it does NOT appear in USED TOPICS\n- Save as `selected_idea`\n\n**Research:**\n- Research accurate dates, numbers, locations, statistics\n- Facts must be verifiable and simple for 6th-grade audience\n- Clearly reflect facts in the script\n\n================================\n25-SECOND SCRIPT (STRICT RULES)\n================================\n\n**HARD CONSTRAINTS:**\n- Script MUST be 90-120 words\n- Script MUST be 8-10 short lines\n- Each line MUST be 8-15 words\n- First line MUST use a proven hook format from BEST PERFORMING HOOKS\n\n**MANDATORY STRUCTURE:**\n1. Hook (first 2 lines): Use proven format, create curiosity gap\n2. Context (next 2 lines): Introduce the obscure fact\n3. Deep Detail (next 3-4 lines): Explain with dates/numbers/locations\n4. Closing Insight (final 1-2 lines): Satisfying explanation, no CTA\n\n**STYLE RULES:**\n- Active voice only\n- Short, clear sentences\n- NO greetings, filler words, or emojis\n- Assume stock footage/photos/text overlays\n- DO NOT summarize - fully explain\n\n**SELF-CHECK:**\n- Count total words (must be 90-120)\n- If under 90 words → EXPAND before returning\n- If over 120 words → TRIM before returning\n- Verify hook matches a proven format\n\n================================\nCAPTION\n================================\n\n- Write 2-sentence caption in 6th-grade language\n- No emojis\n- End with EXACTLY 3 hashtags including #ai\n\n================================\nOUTPUT FORMAT (STRICT JSON)\n================================\n\n{\n  \"selected_idea\": \"The exact idea chosen\",\n  \"script\": \"Faceless video script (90-120 words, 8-10 lines)\",\n  \"caption\": \"Two-sentence caption #hashtag1 #hashtag2 #ai\",\n  \"hook_format_used\": \"Which proven hook format you adapted\"\n}\n",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [-1100, 1000],
+      "id": "ai-agent",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [-1100, 1200],
+      "id": "openai-model",
+      "name": "OpenAI GPT-4o"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"selected_idea\": \"your chosen idea\",\n  \"script\": \"your video script\",\n  \"caption\": \"short video caption\",\n  \"hook_format_used\": \"the hook pattern used\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [-900, 1200],
+      "id": "structured-parser",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"blotato_api_key\": \"YOUR_BLOTATO_API_KEY\",\n  \"template\": \"empty\",\n  \"voiceId\": \"elevenlabs/eleven_multilingual_v2/JBFqnCBsd6RMkjVDRZzb\",\n  \"captionPosition\": \"bottom\",\n  \"script\": {{ $('AI Agent').item.json.output.toJsonString() }},\n  \"style\": \"cinematic\",\n  \"animate_first_image\": true,\n  \"animate_all\": false,\n  \"text_to_image_model\": \"replicate/recraft-ai/recraft-v3\",\n  \"image_to_video_model\": \"fal-ai/framepack\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-300, 1000],
+      "id": "prepare-video",
+      "name": "Prepare Video"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://backend.blotato.com/v2/videos/creations",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "blotato-api-key",
+              "value": "={{ $json.blotato_api_key }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"template\": {\n    \"id\": \"{{ $json.template }}\",\n    \"voiceId\": \"{{ $json.voiceId }}\",\n    \"captionPosition\": \"{{ $json.captionPosition }}\"\n  },\n  \"script\": {{ $json.script.script.toJsonString() }},\n  \"style\": \"{{ $json.style }}\",\n  \"animateFirstImage\": {{ $json.animate_first_image }},\n  \"animateAll\": {{ $json.animate_all }},\n  \"textToImageModel\": \"{{ $json.text_to_image_model }}\",\n  \"imageToVideoModel\": \"{{ $json.image_to_video_model }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [0, 1000],
+      "id": "create-video",
+      "name": "Create Video"
+    },
+    {
+      "parameters": {
+        "amount": 10,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [200, 1000],
+      "id": "wait",
+      "name": "Wait",
+      "webhookId": "video-creation-wait"
+    },
+    {
+      "parameters": {
+        "url": "=https://backend.blotato.com/v2/videos/creations/{{ $json.item.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "blotato-api-key",
+              "value": "={{ $('Prepare Video').item.json.blotato_api_key }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [400, 1000],
+      "id": "get-video",
+      "name": "Get Video"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"blotato_api_key\": \"YOUR_BLOTATO_API_KEY\",\n  \"instagram_id\": \"YOUR_INSTAGRAM_ACCOUNT_ID\",\n  \"final_text_long\": {{ $('Prepare Video').item.json.script.caption.toJsonString() }},\n  \"final_text_short\": {{ $('Prepare Video').item.json.script.caption.toJsonString() }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [700, 1000],
+      "id": "prepare-publish",
+      "name": "Prepare for Publish"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://backend.blotato.com/v2/media",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "blotato-api-key",
+              "value": "={{ $json.blotato_api_key }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $('Get Video').item.json.item.mediaUrl }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 1000],
+      "id": "upload-blotato",
+      "name": "Upload to Blotato"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://backend.blotato.com/v2/posts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "blotato-api-key",
+              "value": "={{ $('Prepare for Publish').item.json.blotato_api_key }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"post\": {\n    \"target\": {\n      \"targetType\": \"instagram\"\n    },\n    \"content\": {\n      \"text\": {{ $('Prepare for Publish').item.json.final_text_long.toJsonString() }},\n      \"platform\": \"instagram\",\n      \"mediaUrls\": [\"{{ $json.url }}\"]\n    },\n    \"accountId\": \"{{ $('Prepare for Publish').item.json.instagram_id }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 1000],
+      "id": "publish-instagram",
+      "name": "[Instagram] Publish"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get All Past Reels",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Best Performing Hooks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Past Reels": {
+      "main": [
+        [
+          {
+            "node": "Process Used Topics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Best Performing Hooks": {
+      "main": [
+        [
+          {
+            "node": "Process Best Hooks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Used Topics": {
+      "main": [
+        [
+          {
+            "node": "Merge Context for AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Best Hooks": {
+      "main": [
+        [
+          {
+            "node": "Merge Context for AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Context for AI": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "📊 Log Reel to Sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI GPT-4o": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Video": {
+      "main": [
+        [
+          {
+            "node": "Create Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Video": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Get Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Video": {
+      "main": [
+        [
+          {
+            "node": "Update Video URL",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare for Publish",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare for Publish": {
+      "main": [
+        [
+          {
+            "node": "Upload to Blotato",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Blotato": {
+      "main": [
+        [
+          {
+            "node": "[Instagram] Publish",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[Instagram] Publish": {
+      "main": [
+        [
+          {
+            "node": "Extract Instagram Media ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Instagram Media ID": {
+      "main": [
+        [
+          {
+            "node": "Update Published Status + Media ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
