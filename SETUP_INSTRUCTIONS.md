@@ -14,7 +14,7 @@ Follow these steps carefully. Total setup time: ~30 minutes.
 
 ## 2. Import Workflows into n8n
 
-- Import files from `/workflows`
+- Import files 
 - Enable credentials later
 
 ---
@@ -52,7 +52,7 @@ Replace everywhere you see:
 ## 6. Activate Schedules
 
 - Main workflow: daily posting
-- Analytics workflow (optional): daily metrics
+
 
 ---
 
